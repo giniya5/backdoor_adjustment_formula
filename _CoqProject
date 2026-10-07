@@ -1,0 +1,6 @@
+-R . project
+# opam install of infotheo
+
+GeneralFormulas.v
+# TwoVarThreeVarExamples.v
+# GeneralParentalAdj.v

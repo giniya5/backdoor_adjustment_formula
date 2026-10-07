@@ -1,0 +1,11 @@
+Makefile
+*.o
+*.vo
+*.vos
+*.vok
+*.glob
+*.aux
+*.Identifier
+*.conf
+.Makefile.d
+.coq-native/
