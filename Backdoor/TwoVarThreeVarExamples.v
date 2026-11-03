@@ -1,3 +1,5 @@
+Set Warnings "-notation-overridden,-deprecated-library-file,-ambiguous-paths".
+
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype fintype bigop.
 From Stdlib Require Import Reals.
 (* Require Import Arith. *)
@@ -1630,3 +1632,5 @@ Qed.
 
 Print Assumptions three_var_collider_backdoor_adjustment.
 End ThreeVarColliderExample.
+
+Set Warnings "notation-overridden,deprecated-library-file,ambiguous-paths".

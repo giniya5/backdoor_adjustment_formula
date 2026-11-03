@@ -1,3 +1,5 @@
+Set Warnings "-notation-overridden,-deprecated-library-file,-ambiguous-paths".
+
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype fintype bigop.
 From Stdlib Require Import Reals.
 From infotheo.probability Require Import proba fdist. (* fsdist jfdist_cond. *)
@@ -7,17 +9,14 @@ From mathcomp Require Import reals.
 From mathcomp Require Import all_ssreflect all_algebra fingroup lra ssralg.
 From mathcomp Require Import unstable mathcomp_extra reals exp.
 From infotheo Require Import ssr_ext ssralg_ext bigop_ext realType_ext realType_ln.
-(* Require Import ssr_ext ssralg_ext bigop_ext realType_ext realType_ln. *)
-Require Import Classical.
-Require Import Field.
-Require Import Lia.
+From Stdlib Require Import Classical Field Lia.
 
 From project Require Import GeneralFormulas.
 
 Local Open Scope ring_scope.
 Local Open Scope reals_ext_scope.
 Local Open Scope fdist_scope.
-Local Open Scope proba_scope.
+Local Open Scope proba_scope. 
 
 Section ParentalAdjustmentFormula.
 
@@ -64,6 +63,17 @@ Variable paTinterv : outcomesT -> {RV P -> outcomesPaT}.
 Variable Zinterv : outcomesT -> {RV P -> outcomesZ}.
 Variable Einterv : outcomesT -> {RV P -> outcomesE}.
 
+Lemma cpr_eq0_denom_pfwd1: forall {TA TD: finType}
+  {U : finType} {P : R.-fdist (U)}
+  (X : {RV P -> TA}) (Y: {RV P -> TD}) a b,
+  pfwd1 Y b = 0 ->
+  cPr_eq X a Y b = 0.
+Proof.
+  intros.
+  apply cpr_eq0_denom.
+  assumption.
+Qed.
+
 (*  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 SECTION : Parental Adjustment Formula ->
                     Backdoor Adjustment Formula
@@ -76,19 +86,8 @@ Lemma pair_to_single_non_zero_specialized:
   (forall (i0 : outcomesPaT) (i1 : outcomesT),
       `Pr[ [% T, paT] = (i1, i0) ] != 0).
 Proof.
-  (* move=> H0 i0 i1.
-  have Hz : inhabited outcomesZ by exact: (inhabits_fin _).
-  destruct Hz as [z].
-  have H0 := H i0 z i1.
-  (* H0 : Pr[ [% paT, [% T, Z]] = (i0, (i1, z)) ] != 0 *)
-  apply: (pair_to_single_non_zero_right paT [% T, Z] i0 (i1, z)) in H0.
-  (* H0 : Pr[ [% T, Z] = (i1, z) ] != 0 *)
-  exact: (pair_to_single_non_zero_left T Z i1 z H0). *)
-
   intros.
   specialize (H0 i0).
-  (* Check pfwd1_neq0. *)
-  (* destruct (classic (exists z, z \in outcomesZ)). *)
   destruct H1 as [z].
   specialize (H0 z i1).
   rewrite pfwd1_pairA in H0.
@@ -97,13 +96,6 @@ Proof.
   simpl.
   pose proof (pair_to_single_non_zero_left [% paT, T] Z (i0, i1) z H0).
   assumption.
-
-  (* apply pair_to_single_non_zero_left in H0. *)
-  (* Check pfwd1_pairA. *)
-  (* apply pair_to_single_non_zero_right in H0.
-  apply pair_to_single_non_zero_right with (X := Z)  *)
-  (* specialize (H0 i0 i1).
-  Check pfwd1_domin_RV2. *)
 Qed.
 
 Lemma cond_to_pair_non_zero: forall {A B : finType} 
@@ -115,7 +107,8 @@ Proof.
   case: (boolP (`Pr[ Y = y ] == 0)).
   intros.
     move /eqP in p.
-    rewrite cpr_eq0_denom in H0; try assumption.
+    rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ X Y x y p) in H0.
+    (* rewrite cpr_eq0_denom in H0; try assumption. *)
     apply false_cant_be in H0.
     discriminate H0.
   
@@ -151,8 +144,6 @@ Proof.
     assumption.
   rewrite H1 in H2.
   apply esym in H2.
-  (* apply Rmult_integral in H2. *)
-  (* Check GRing.mulf_eq0. *)
   move /eqP in H2.
   rewrite !GRing.mulf_eq0 in H2.
   move /orP in H2.
@@ -181,9 +172,6 @@ Qed.
 Lemma use_indep_statements: forall h t, 
   Z _|_ T | paT ->
   H _|_ paT | [% T, Z] ->
-  (* (exists z, z \in outcomesZ) -> *)
-  (* (forall i0 i1, `Pr[ [% T, paT] = (i1, i0) ] != 0) -> *)
-  (* (forall i0 i1 i2, `Pr[ [% paT, [% T, Z]] = (i0, (i2, i1)) ] != 0) -> *)
   (forall u t, `Pr[ T=t | paT=u ] != 0) ->
   \sum_(i in outcomesZ) \sum_(u in outcomesPaT)
       `Pr[ H = h | [% T, Z] = (t, i) ] * `Pr[ Z = i | paT = u ] * `Pr[ paT = u ] = 
@@ -196,7 +184,6 @@ Proof.
   intros.
   apply eq_bigr.
   intros.
-  (* apply mult_both_sides_r. *)
   specialize (H2 i0 t).
   pose proof (cond_to_pair_non_zero _ _ H2).
   pose proof (indep_to_equality _ _ _ i t i0 H0 H5).
@@ -206,6 +193,7 @@ Proof.
     move /eqP in p.
     pose proof (oddly_specific _ _ _ h H2 p).
     rewrite H7.
+    (* rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ H [% T, Z, paT] h (t, i, i0) p). *)
     rewrite cpr_eq0_denom.
     rewrite mult_zero_left.
     rewrite mult_zero_left.
@@ -214,58 +202,10 @@ Proof.
     assumption.
   
   intros.
-  (* pose proof (pair_to_single_non_zero_specialized H3 H2).
-  specialize (H6 i0 t).
-  pose proof (indep_to_equality _ _ _ i t i0 H0 H6).
-  specialize (H3 i0 i t). *)
   pose proof (indep_to_equality _ _ _ h i0 (t, i) H1 i1).
-  (* apply indep_to_equality with (x := i) (y := t) (w := i0) in H0.
-  apply indep_to_equality with (x := h) (y := i0) (w := (t, i)) in H1. *)
-  (* rewrite H7. *)
   rewrite H7.
   reflexivity.
 Qed.
-
-(* Absolutely not proven, and idk if it is proveable. Trying to remove the condition
-    where we need the equation to be non-zero at all values. *)
-(* Lemma use_indep_statements_get_rid_of_zero: forall h t, 
-  Z _|_ T | paT ->
-  H _|_ paT | [% T, Z] ->
-  \sum_(i in outcomesZ) \sum_(u in outcomesPaT)
-      `Pr[ H = h | [% T, Z] = (t, i) ] * `Pr[ Z = i | paT = u ] * `Pr[ paT = u ] = 
-  \sum_(i in outcomesZ) \sum_(u in outcomesPaT)
-      `Pr[ H = h | [% T, Z, paT] = (t, i, u) ] * `Pr[ Z = i | [% paT, T] = (u, t) ] 
-      * `Pr[ paT = u ].
-Proof.
-  intros.
-  apply eq_bigr.
-  intros.
-  apply eq_bigr.
-  intros.
-  apply mult_both_sides_r.
-
-  have [Hzero | Hnonzero] := boolP (`Pr[ [% paT, [% T, Z]] = (i0, (t, i)) ] == 0).
-      move/eqP: Hzero => Hzero.
-      assert (`Pr[ H = h | [% T, Z, paT] = (t, i, i0) ] = 0 ).
-        admit.
-      rewrite H4.
-      rewrite mult_zero_left.
-      have [Hzero' | Hnonzero' ] := boolP (`Pr[ paT = i0 ] == 0).
-        move/eqP: Hzero' => Hzero'.
-        rewrite cpr_eq0_denom; try assumption.
-        rewrite mult_zero_right.
-        reflexivity.
-
-        assert (`Pr[ [% T, Z] = (t, i) ] = 0).
-          unfold cinde_RV in H0.
-          specialize (H0 i t i0).
-
-          admit.
-        rewrite -> cpr_eq0_denom with (Y := [%T, Z]); try assumption.
-        rewrite mult_zero_left.
-        reflexivity.
-  admit.
-Admitted. *)
 
 (* Lemma saying that it the parental adjustment formula, some
     independence statements, and a non-zero statement is true,
@@ -362,9 +302,7 @@ Lemma parental: forall t,
   (forall h pa e,
     `Pr[ [% (Hinterv t), (paTinterv t), (Einterv t)] = (h, pa, e) ] 
         = `Pr[ [% H, T, paT, E] = (h, t, pa, e) ] / `Pr[ T = t | paT = pa ]) ->
-  (* (forall i0 i1 i2, `Pr[ [% paT, T, Z] = (i0, i2, i1) ] != 0) -> *)
   (forall i0 i1, `Pr[ [% paT, T] = (i0, i1) ] != 0) ->
-  (* (exists z, z \in outcomesZ) -> *)
   (forall h, `Pr[(Hinterv t) = h] = \sum_(u: outcomesPaT) 
       `Pr[ H=h | [% T, paT] = (t, u)] * `Pr[paT=u]).
 Proof.
@@ -567,7 +505,6 @@ Proof.
       reflexivity.
       rewrite !andbF.
       reflexivity.
-(* by rewrite !pfwd1E /Pr; apply: eq_bigl=> a; rewrite !inE xpair_eqE andbb. *)
 Qed.
 
 Lemma if_one_is_true_the_other_isnt: forall {X': finType} 
@@ -638,8 +575,10 @@ Proof.
   case: (boolP (`Pr[ X = c ] == 0)).
     intros.
     move /eqP in p.
-    apply cpr_eq0_denom.
-    assumption.
+    rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ X X b c p).
+    reflexivity.
+    (* apply cpr_eq0_denom. *)
+    (* assumption. *)
 
   intros.
   rewrite cpr_eqE.
@@ -658,8 +597,11 @@ Proof.
   case: (boolP (`Pr[ X = c ] == 0)).
     intros.
     move /eqP in p.
-    apply cpr_eq0_denom.
-    assumption.
+    exact (@cpr_eq0_denom_pfwd1 _ _ _ _ _ [% Y, X] X (y, b) c p).
+    (* apply cpr_eq0_denom with (X := [% Y, X]) (a := (y,b)) in p.
+    exact p. *)
+    (* apply cpr_eq0_denom.
+    assumption. *)
 
   intros.
   rewrite cpr_eqE.
@@ -678,8 +620,7 @@ Proof.
   case: (boolP (`Pr[ [% W, X] = (w, c) ] == 0)).
     intros.
     move /eqP in p.
-    apply cpr_eq0_denom.
-    assumption.
+    exact (@cpr_eq0_denom_pfwd1 _ _ _ _ _ [% Y, X] [% W, X] (y, b) (w, c) p).
 
   intros.
   rewrite cpr_eqE.
@@ -716,8 +657,7 @@ Proof.
   case: (boolP (`Pr[ [% Y, X] = (y, c) ] == 0)).
     intros.
     move /eqP in p.
-    apply cpr_eq0_denom.
-    assumption.
+    exact (@cpr_eq0_denom_pfwd1 _ _ _ _ _ X [% Y, X] b (y, c) p).
 
   intros.
   rewrite cpr_eqE.
@@ -754,14 +694,7 @@ Proof.
   assumption.
 Qed.
 
-(* Lemma extra_identical_factor_general: forall {X' Y' W': finType} 
-  (X : {RV P -> X'}) (Y : {RV P -> Y'}) (W : {RV P -> W'}) w x a b,
-  b != c ->
-  `Pr[ [% Y, X] = (y, b) | X = c ] = 0.
-  `Pr[ [% T, C] = (t, c) | C = c] = `Pr[ T = t | C = c]. *)
-
 Lemma fvc_indep1:
-  (* mutual_indep_four E C T H -> *)
   (forall c t, `Pr[ [% C, T] = (c, t) ] != 0) ->
   T _|_ C | C.
 Proof.
@@ -778,9 +711,6 @@ Proof.
   
     specialize (H0 c a).
     apply pair_to_single_non_zero in H0; eauto.
-    (* apply pair_to_single_non_zero with (outcomesH := outcomesH)
-        (outcomesT := outcomesT) (outcomesPaT := outcomesH) 
-        (outcomesZ := outcomesH) (outcomesE := outcomesH) in H0; try eauto. *)
 
   rewrite var_cond_diff_zero; try assumption.
   rewrite mult_zero_right.
@@ -800,15 +730,12 @@ Proof.
     intros.
     move /eqP in i.
     inversion i.
-    (* pose proof (remove_redundant_cond_term). *)
     rewrite -> remove_redundant_cond_term; eauto.
-    (* rewrite -> remove_redundant_cond_term with (outcomesH := outcomesH)
-        (outcomesT := outcomesT) (outcomesPaT := outcomesC) 
-        (outcomesZ := outcomesC) (outcomesE := outcomesE); try eauto. *)
     case (boolP (`Pr[ [% T, C] = (t, c) ] == 0)).
       intros.
       move /eqP in i0.
-      rewrite !cpr_eq0_denom; try assumption.
+      rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ H [% T, C] a (t, c) i0).
+      (* rewrite !cpr_eq0_denom; try assumption. *)
       rewrite GRing.mul0r.
       reflexivity.
     intros.
@@ -819,19 +746,10 @@ Proof.
     
   intros.
   rewrite -> cond_term_makes_impossible; eauto.
-  (* rewrite -> cond_term_makes_impossible with (outcomesH := outcomesH)
-        (outcomesT := outcomesT) (outcomesPaT := outcomesC) 
-        (outcomesZ := outcomesC) (outcomesE := outcomesE); try eauto. *)
   rewrite -> var_cond_diff_zero_gen3; try assumption.
   rewrite GRing.mulr0.
   reflexivity.
 Qed.
-
-(* Lemma extra_factor_in_nonzero:
-  (forall i0 i2, `Pr[ [% C, T] = (i0, i2) ] != 0) ->
-  (forall i0 i1 i2, `Pr[ [% C, T, C] = (i0, i2, i1) ] != 0).
-Proof.
-Admitted. *)
 
 Lemma four_var_confounder_backdoor_adjustment: forall t,
   (forall h c e,
@@ -843,9 +761,6 @@ Lemma four_var_confounder_backdoor_adjustment: forall t,
       `Pr[ H = h | [% T, C] = (t, c)] * `Pr[C = c]).
 Proof.
   intros.
-  (* pose proof (fvc_indep1 H1).
-  pose proof (fvc_indep2 H1).
-  pose proof (extra_factor_in_nonzero H2). *)
   eapply graphfactor_indp_backdoor_adj with (paT := C) 
     (paTinterv := Cinterv) (Einterv := Einterv) (E := E); try assumption.
   info_eauto.
@@ -854,10 +769,7 @@ Proof.
   specialize (H2 c t0).
   rewrite pfwd1_pairC. unfold swap. simpl.
   apply cond_to_pair_non_zero; eauto.
-  (* apply cond_to_pair_non_zero with (outcomesH := outcomesH) 
-      (outcomesZ := outcomesC) (outcomesE := outcomesE); eauto. *)
   apply fvc_indep2; try assumption.
-  (* apply extra_factor_in_nonzero; try assumption. *)
 Qed.
 
 Lemma factorhold_four_var_helper_helper: forall t,
@@ -874,7 +786,6 @@ Proof.
   intros.
   unfold cinde_RV.
   intros.
-
 Admitted.
 
 (* Lemma factorhold_four_var_helper_helper'': forall t, 
@@ -1035,7 +946,6 @@ Proof.
       (paT := [% C, D, Q]) (E := [% E, F])
       (paTinterv := (fun t => [% (Cinterv t), (Dinterv t), (Qinterv t)]))
       (Einterv := (fun t => [% (Einterv t), (Finterv t)])); eauto. 
-  (* exact (fun t => [% (Cinterv t), (Finterv t)]). *)
 Qed.
 
 Lemma can_swap_indep_cond_order: forall  {A B C D : finType} (X : {RV P -> A}) (Y : {RV P -> B})
@@ -1086,6 +996,7 @@ Proof.
       (outcomesE := outcomesH) in H4; eauto. *)
   admit.
 Admitted.
-  
 
 End LargeExample.
+
+Set Warnings "notation-overridden,deprecated-library-file,ambiguous-paths".

@@ -1,0 +1,6 @@
+[submodule "causal_models_formalization"]
+	path = causal_models_formalization
+	url = https://github.com/annazhang03/causal_models_formalization.git
+[submodule "causal_graph_probability"]
+	path = causal_graph_probability
+	url = https://github.com/Blablablanca/rocq-causal.git

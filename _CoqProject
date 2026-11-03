@@ -1,6 +1,22 @@
--R . project
+-R Backdoor project
+-R DSepCondIndep CondIndep
+# -Q causal_models_formalization/DAGs DAGs
+# -Q causal_models_formalization/Utils Utils
+# -Q causal_models_formalization/CausalDiagrams CausalDiagrams
+# -Q causal_models_formalization/Semantics Semantics
+-Q causal_graph_probability/Experiment Experiment
+-Q causal_graph_probability/dsep-core/DAGs DAGs
+-Q causal_graph_probability/dsep-core/Utils Utils
+-Q causal_graph_probability/dsep-core/CausalDiagrams CausalDiagrams
+-Q causal_graph_probability/dsep-core/Semantics Semantics
 # opam install of infotheo
 
-GeneralFormulas.v
-# TwoVarThreeVarExamples.v
-# GeneralParentalAdj.v
+Backdoor/GeneralFormulas.v
+Backdoor/TwoVarThreeVarExamples.v
+Backdoor/GeneralParentalAdj.v
+Backdoor/ScienceExp.v
+DSepCondIndep/DSepTZ.v
+DSepCondIndep/DSepHPaT.v
+DSepCondIndep/MarkovFactorization.v
+DSepCondIndep/RandomVariableDef.v
+DSepCondIndep/ConfounderExample.v

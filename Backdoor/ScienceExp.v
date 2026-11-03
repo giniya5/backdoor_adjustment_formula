@@ -1,3 +1,5 @@
+Set Warnings "-notation-overridden,-deprecated-library-file,-ambiguous-paths".
+
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype fintype bigop.
 Require Import Reals.
 From infotheo.probability Require Import proba fdist. (* fsdist jfdist_cond. *)
@@ -453,7 +455,7 @@ Proof.
   unfold H.
   unfold F. 
   (* apply cinde_fn_transform_gen. *)
-  Check cinde_fn_transform_gen.
+  (* Check cinde_fn_transform_gen. *)
 
   (* f(T D Pa UFRV UHRV) _|_ f(T D Pa UMRV) | T D Pa *)
   (* UFRV UHRV _|_ UMRV | T D Pa *)
@@ -487,8 +489,8 @@ Proof.
   move=> TU TA TB TD P' X Y Z Hindep.
   unfold inde_RV.
   intros.
-  rewrite -> total_prob' with (X := Z) (C := TB) (W := Y).
-  rewrite -> total_prob' with (X := [% X, Z]) (C := TB) (W := Y).
+  rewrite -> total_prob' with (X := Z) (W := Y).
+  rewrite -> total_prob' with (X := [% X, Z]) (W := Y).
   assert (`Pr[ X = x ] * (\sum_(u in TB)  `Pr[ [% Z, Y] = (y, u) ]) = 
       (\sum_(u in TB)  `Pr[ X = x ] * `Pr[ [% Z, Y] = (y, u) ])).
     rewrite -big_distrr.
@@ -528,7 +530,9 @@ Proof.
   specialize (H0 a (b, c)).
   have [Hz | Hnz ] := boolP (`Pr[ Z = c ] == 0).
     move /eqP in Hz.
-    rewrite !cpr_eq0_denom_gen; try assumption.
+    rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ X Z a c Hz).
+    rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ [% X, Y] Z (a, b) c Hz).
+    (* rewrite !cpr_eq0_denom_gen; try assumption. *)
     rewrite mult_zero_left.
     reflexivity.
   rewrite !cpr_eqE.
@@ -590,12 +594,14 @@ Proof.
 
   have [Hzero | Hnonzero] := boolP (`Pr[Z = c] == 0).
     move/eqP: Hzero => Hz'.
-    rewrite !cpr_eq0_denom_gen; try assumption.
+    rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ X Z a c Hz').
+    rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ [% X, Y] Z (a, b) c Hz').
+    (* rewrite !cpr_eq0_denom_gen; try assumption. *)
     rewrite mult_zero_left.
     reflexivity.
 
-  rewrite can_move_cond_gen in H0.
-  rewrite can_move_cond_gen in H0.
+  rewrite can_move_cond in H0.
+  rewrite can_move_cond in H0.
   rewrite <- H0.
 
   rewrite cpr_eqE.
@@ -630,9 +636,8 @@ Proof.
   pose proof (pair_to_cond_indep [% UHRV, UFRV] M [% T, [% D, Pa]] Hindep).
   apply adding_conditional_to_indep in H0.
   (* apply indp_not_affected_by_adding_cond_gen in H0. *)
-  pose proof (indp_not_affected_by_adding_cond_gen _ _ _ H0).
-  Check cinde_fn_transform_gen.
-  pose proof (cinde_fn_transform_gen [% UHRV, UFRV] [% M, [% D, Pa]] [% T, [% D, Pa]]
+  pose proof (indp_not_affected_by_adding_cond _ _ _ H0).
+  pose proof (cinde_fn_transform' [% UHRV, UFRV] [% M, [% D, Pa]] [% T, [% D, Pa]]
       (fun x => fH x.1.1 x.2.2.1 x.2.2.2 (fF x.1.2 x.2.2.1 x.2.1) x.2.1)
       (fun y => y.1) H1).
   unfold comp_RV in H2.
@@ -655,7 +660,11 @@ Proof.
     case: (boolP ( `Pr[ [% T, [% D, Pa]] = c ] == 0 )).
       intros.
       move /eqP in p0.
-      rewrite !cpr_eq0_denom_gen; try assumption.
+      rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ 
+        [% H, [% M, [% D, Pa]]] [% T, [% D, Pa]] (a, (m, (d, p))) c p0).
+      rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ 
+        [% H, [% D, M, Pa]] [% T, [% D, Pa]] (a, (d, m, p)) c p0).
+      (* rewrite !cpr_eq0_denom_gen; try assumption. *)
       reflexivity.
     intros.
     rewrite !cpr_eqE.
@@ -680,7 +689,11 @@ Proof.
     case: (boolP ( `Pr[ [% T, [% D, Pa]] = c ] == 0 )).
       intros.
       move /eqP in p0.
-      rewrite !cpr_eq0_denom_gen; try assumption.
+      rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ 
+        [% M, [% D, Pa]] [% T, [% D, Pa]] (m, (d, p)) c p0).
+      rewrite (@cpr_eq0_denom_pfwd1 _ _ _ _ _ 
+        [% D, M, Pa] [% T, [% D, Pa]] (d, m, p) c p0).
+      (* rewrite !cpr_eq0_denom_gen; try assumption. *)
       reflexivity.
     intros.
     rewrite !cpr_eqE.
@@ -747,3 +760,5 @@ Qed.
 Print Assumptions backdoor_adj_alcohol.
 
 End alcohol.
+
+Set Warnings "notation-overridden,deprecated-library-file,ambiguous-paths".

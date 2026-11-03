@@ -1,3 +1,5 @@
+Set Warnings "-notation-overridden,-deprecated-library-file,-ambiguous-paths".
+
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype fintype bigop.
 From Stdlib Require Import Reals.
 From infotheo.probability Require Import proba fdist. (* fsdist jfdist_cond. *)
@@ -734,7 +736,7 @@ Lemma mut_indp_cond_indp : forall {X' Y' Z': finType}
   (X : {RV P -> X'}) (Y : {RV P -> Y'}) (Z: {RV P -> Z'}),
   mutual_indep_three X Y Z ->
   X _|_ Y | Z.
-Proof.ar
+Proof.
   intros.
   unfold mutual_indep_three in H.
   unfold cinde_RV.
@@ -962,3 +964,5 @@ Proof.
 Qed.
 
 End GeneralLemmas.
+
+Set Warnings "notation-overridden,deprecated-library-file,ambiguous-paths".
